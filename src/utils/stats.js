@@ -52,6 +52,34 @@ export const isProgressive = (startBox, endBox, isFutsal) => {
     return endNode.col >= startNode.col + 2;
 };
 
+// Distance Helper (Simplified Euclidean)
+function getDistance(startBox, endBox, isFutsal) {
+    if (!startBox || !endBox) return 0;
+    const s = boxToXY(startBox, isFutsal);
+    const e = boxToXY(endBox, isFutsal);
+    return Math.sqrt(Math.pow(e.col - s.col, 2) + Math.pow(e.row - s.row, 2));
+}
+
+// xG Heuristic Model (L2R)
+function getXG(box, isFutsal) {
+    if (!box) return 0;
+    const { col, row } = boxToXY(box, isFutsal);
+    const cols = isFutsal ? 8 : 12;
+    const rows = isFutsal ? 4 : 8;
+    
+    // Distance to goal center (approx)
+    const goalCol = cols;
+    const goalRowCenter = (rows - 1) / 2;
+    const dist = Math.sqrt(Math.pow(goalCol - col, 2) + Math.pow(goalRowCenter - row, 2));
+    
+    // Base xG: closer = higher. Max dist is approx sqrt(12^2 + 4^2) = 12.6
+    // Center is better than wings.
+    let xg = Math.max(0.01, 0.3 - (dist * 0.025));
+    if (isInPenaltyBox(box, isFutsal)) xg += 0.1;
+    if (dist < 2) xg += 0.2; // Goal mouth
+    return Math.min(0.9, xg);
+}
+
 // Expected Threat (xT) Base Proxy Matrix (L2R)
 export const getXtValue = (box, isFutsal) => {
     if (!box) return 0;
@@ -74,14 +102,16 @@ export function computeStats(events, match) {
         pass_total: 0, pass_success: 0, progressive_passes: 0, key_passes: 0, assists: 0,
         goal_kicks: 0, gk_throws: 0, corners: 0, free_kicks: 0, throw_ins: 0,
         long_balls: 0, passes_in_final_third: 0, passes_in_box: 0,
+        total_pass_distance: 0, total_pass_progression: 0,
         // 3. Attacking
         final_third_entries: 0, box_entries: 0, shot_creation_actions: 0, deep_completions: 0,
         shots_inside_box: 0, shots_outside_box: 0, shot_free_kicks: 0, shot_penalties: 0,
+        total_xg: 0, attacking_pace_sum: 0, attacking_pace_count: 0,
         // 4. Dribbling & Carry
         dribbles_attempted: 0, dribble_success: 0,
         dribbles_to_box: 0, dribbles_in_att_third: 0, dribbles_lead_to_shot: 0,
         carries_successful: 0,
-        progressive_carries: 0,
+        progressive_carries: 0, att_third_dribbles: 0, att_third_dribbles_success: 0,
         // 5. Defense
         tackles: 0, interceptions: 0, fouls: 0, yellow: 0, red: 0,
         tackles_in_box: 0, tackles_in_def_third: 0,
@@ -89,9 +119,13 @@ export function computeStats(events, match) {
         recoveries: 0, recoveries_def_third: 0, recoveries_box: 0,
         defensive_actions: 0, high_press_actions: 0,
         ppda_actions: 0, ppda_passes: 0,
-        // 6. Territory
+        high_press_recoveries: 0, counter_press_actions: 0,
+        defensive_depth_sum: 0, recovery_pace_sum: 0, recovery_pace_count: 0,
+        // 6. Territory & Possession
         final_third_passes: 0, attacking_third_actions: 0, box_touches: 0,
-        // 7. Possession & Advanced
+        attacking_half_actions: 0, defensive_half_actions: 0,
+        possession_time: 0, zones_progressed: 0,
+        // 7. Advanced
         chains: 0, chain_events: 0, xt_generated: 0,
         // Base
         events_count: 0, heatmap: {}, corner_goals: 0, fk_goals: 0, penalty_goals: 0, own_goals: 0
@@ -105,6 +139,8 @@ export function computeStats(events, match) {
     let currentPossessionTeam = null;
     let currentChainEvents = 0;
     let lastEvent = null;
+    let lastTurnoverTime = events.length > 0 ? events[0].timestamp : null;
+    let lastPossessionChangeTime = events.length > 0 ? events[0].timestamp : null;
 
     const momentumBins = {};
 
@@ -115,6 +151,7 @@ export function computeStats(events, match) {
         t.events_count++;
 
         const nextEv = events[idx + 1];
+        const time = ev.timestamp ? new Date(ev.timestamp).getTime() / 1000 : 0;
 
         if (ev.match_minute > maxMinute) maxMinute = ev.match_minute;
 
@@ -125,22 +162,39 @@ export function computeStats(events, match) {
         const { col: startCol, row: startRow } = boxToXY(ev.location_box, match.is_futsal);
         const cols = match.is_futsal ? 8 : 12;
         const inAttacking60 = startCol >= (cols * 0.4); // For PPDA, count actions in opponent's defensive 60%
+        const inOpponentHalf = startCol >= (cols / 2);
 
-        // Sequential / Chain Logic (Strict)
+        if (inOpponentHalf) t.attacking_half_actions++;
+        else t.defensive_half_actions++;
+
+        // Sequential / Chain Logic & Possession Timing
         const chainBreakingOutcomes = ['Miss', 'Interception', 'Lost Control', 'Unsuccessful', 'Foul', 'Yellow', 'Red'];
         const breaksChain = chainBreakingOutcomes.includes(ev.outcome) || ev.action === 'Shot';
 
         if (!currentPossessionTeam) {
             currentPossessionTeam = ev.team_id;
             currentChainEvents = 1;
+            lastPossessionChangeTime = time;
+            
+            // This is a recovery!
+            if (lastTurnoverTime) {
+                const recoveryTime = time - lastTurnoverTime;
+                t.recovery_pace_sum += recoveryTime;
+                t.recovery_pace_count++;
+            }
         } else if (currentPossessionTeam === ev.team_id) {
             currentChainEvents++;
+            t.possession_time += (time - (lastEvent?.timestamp ? new Date(lastEvent.timestamp).getTime() / 1000 : time));
         } else {
+            // Possession Change (Turnover)
             const oldT = currentPossessionTeam === match.team_a_id ? home : away;
             oldT.chains++;
             oldT.chain_events += currentChainEvents;
+            
             currentPossessionTeam = ev.team_id;
             currentChainEvents = 1;
+            lastTurnoverTime = time;
+            lastPossessionChangeTime = time;
         }
 
         if (breaksChain) {
@@ -149,12 +203,19 @@ export function computeStats(events, match) {
             currentT.chain_events += currentChainEvents;
             currentPossessionTeam = null;
             currentChainEvents = 0;
+            lastTurnoverTime = time;
+        }
+
+        // Counter-Pressing Window (Action within 5s of turnover)
+        const timeSinceLoss = time - lastTurnoverTime;
+        const isDefensiveActionAction = ['Tackle', 'Interception', 'Block', 'Clearance'].includes(ev.action);
+        if (isDefensiveActionAction && timeSinceLoss <= 5 && currentPossessionTeam !== ev.team_id) {
+            t.counter_press_actions++;
         }
 
         // Advanced Base Parsing
         const endBox = ev.end_location_box;
         const startBox = ev.location_box;
-
         const { col: endCol } = boxToXY(endBox, match.is_futsal);
 
         const enteredFinalThird = !isInAttackingThird(startBox, match.is_futsal) && isInAttackingThird(endBox, match.is_futsal);
@@ -215,6 +276,12 @@ export function computeStats(events, match) {
                         t.passes_in_box++;
                     }
                     
+                    const dist = getDistance(startBox, endBox, match.is_futsal);
+                    const prog = Math.max(0, endCol - startCol);
+                    t.total_pass_distance += dist;
+                    t.total_pass_progression += prog;
+                    t.zones_progressed += prog;
+
                     const colDiff = endCol - startCol;
                     const longThreshold = match.is_futsal ? 2 : 3;
                     if (colDiff > longThreshold) {
@@ -235,18 +302,28 @@ export function computeStats(events, match) {
                     const interceptorT = isHome ? away : home;
                     interceptorT.interceptions++;
                     interceptorT.defensive_actions++;
+                    interceptorT.defensive_depth_sum += startCol;
                     if (isInDefensiveBox(startBox, match.is_futsal)) interceptorT.interceptions_in_box++;
                     if (isInDefensiveThird(startBox, match.is_futsal)) interceptorT.interceptions_in_def_third++;
                     if (nextEv && nextEv.team_id === interceptorTeamId) {
                         interceptorT.recoveries++;
                         if (isInDefensiveThird(startBox, match.is_futsal)) interceptorT.recoveries_def_third++;
                         if (isInDefensiveBox(startBox, match.is_futsal)) interceptorT.recoveries_box++;
+                        if (inAttThirdStart) interceptorT.high_press_recoveries++;
                     }
                     if (inAttThirdStart) interceptorT.high_press_actions++;
                 }
                 break;
             case 'Shot':
                 t.shots++;
+                const xgVal = getXG(ev.location_box, match.is_futsal);
+                t.total_xg += xgVal;
+                
+                if (lastPossessionChangeTime) {
+                    t.attacking_pace_sum += (time - lastPossessionChangeTime);
+                    t.attacking_pace_count++;
+                }
+
                 if (['Goal', 'SoT Save', 'SoT Block'].includes(ev.outcome)) t.sot++;
                 if (isInPenaltyBox(ev.location_box, match.is_futsal)) {
                     t.shots_inside_box++;
@@ -274,6 +351,7 @@ export function computeStats(events, match) {
             case 'Clearance':
                 if (ev.action === 'Tackle') t.tackles++;
                 t.defensive_actions++;
+                t.defensive_depth_sum += startCol;
                 if (inAttThirdStart) t.high_press_actions++;
                 if (isInDefensiveBox(startBox, match.is_futsal)) t.tackles_in_box++;
                 if (isInDefensiveThird(startBox, match.is_futsal)) t.tackles_in_def_third++;
@@ -281,6 +359,7 @@ export function computeStats(events, match) {
                     t.recoveries++;
                     if (isInDefensiveThird(startBox, match.is_futsal)) t.recoveries_def_third++;
                     if (isInDefensiveBox(startBox, match.is_futsal)) t.recoveries_box++;
+                    if (inAttThirdStart) t.high_press_recoveries++;
                 }
                 if (ev.outcome === 'Foul') t.fouls++;
                 if (ev.outcome === 'Yellow') {
@@ -298,12 +377,15 @@ export function computeStats(events, match) {
                     if (enteredFinalThird) t.final_third_entries++;
                     if (enteredPenaltyBox) t.box_entries++;
                     if (isProgressiveAction) t.progressive_carries++;
+                    t.zones_progressed += Math.max(0, endCol - startCol);
                 }
                 break;
             case 'Dribble':
                 t.dribbles_attempted++;
+                if (inAttThirdStart) t.att_third_dribbles++;
                 if (ev.outcome === 'Successful') {
                     t.dribble_success++;
+                    if (inAttThirdStart) t.att_third_dribbles_success++;
                     if (!isInPenaltyBox(startBox, match.is_futsal) && isInPenaltyBox(endBox, match.is_futsal)) {
                         t.dribbles_to_box++;
                     }
@@ -312,6 +394,7 @@ export function computeStats(events, match) {
                     }
                     if (enteredFinalThird) t.final_third_entries++;
                     if (enteredPenaltyBox) t.box_entries++;
+                    t.zones_progressed += Math.max(0, endCol - startCol);
                 }
                 break;
             case 'Own Goal':
@@ -387,6 +470,9 @@ export function computeStats(events, match) {
 
     const passProxyPossession = (home.pass_total + away.pass_total) === 0 ? 50 : pct(home.pass_total, home.pass_total + away.pass_total);
 
+    const getRate = (n, d) => d === 0 ? 0 : (n / d);
+    const getAvg = (sum, count) => count === 0 ? 0 : (sum / count);
+
     return {
         home, away, maxMinute, keyEvents, possession: passProxyPossession,
         passAccHome: pct(home.pass_success, home.pass_total),
@@ -406,6 +492,45 @@ export function computeStats(events, match) {
         fieldTiltHome, fieldTiltAway,
         attThirdHome, attThirdAway,
         homePossLength, awayPossLength,
-        momentumData
+        momentumData,
+        // Elite Metrics - Attacking
+        xgHome: home.total_xg, xgAway: away.total_xg,
+        shotQualityHome: getRate(home.total_xg, home.shots),
+        shotQualityAway: getRate(away.total_xg, away.shots),
+        boxEfficiencyHome: pct(home.box_entries, home.final_third_entries),
+        boxEfficiencyAway: pct(away.box_entries, away.final_third_entries),
+        shotCreationRateHome: getRate(home.shots, home.pass_total) * 100,
+        shotCreationRateAway: getRate(away.shots, away.pass_total) * 100,
+        attPaceHome: getAvg(home.attacking_pace_sum, home.attacking_pace_count),
+        attPaceAway: getAvg(away.attacking_pace_sum, away.attacking_pace_count),
+        // Elite Metrics - Passing
+        progRateHome: pct(home.progressive_passes, home.pass_success),
+        progRateAway: pct(away.progressive_passes, away.pass_success),
+        ftEntryRateHome: getRate(home.final_third_entries, home.chains),
+        ftEntryRateAway: getRate(away.final_third_entries, away.chains),
+        directnessHome: getRate(home.total_pass_progression, home.total_pass_distance),
+        directnessAway: getRate(away.total_pass_progression, away.total_pass_distance),
+        // Elite Metrics - Defense
+        highPressSuccessHome: pct(home.high_press_recoveries, home.high_press_actions),
+        highPressSuccessAway: pct(away.high_press_recoveries, away.high_press_actions),
+        counterPressRateHome: getRate(home.counter_press_actions, away.chains),
+        counterPressRateAway: getRate(away.counter_press_actions, home.chains),
+        challengeIntensityHome: getRate(home.defensive_actions, (away.possession_time / 60)),
+        challengeIntensityAway: getRate(away.defensive_actions, (home.possession_time / 60)),
+        defDepthHome: getAvg(home.defensive_depth_sum, home.defensive_actions),
+        defDepthAway: getAvg(away.defensive_depth_sum, away.defensive_actions),
+        recoveryPaceHome: getAvg(home.recovery_pace_sum, home.recovery_pace_count),
+        recoveryPaceAway: getAvg(away.recovery_pace_sum, away.recovery_pace_count),
+        // Elite Metrics - Dribbling & Possession
+        carryProgRateHome: pct(home.progressive_carries, home.carries_successful),
+        carryProgRateAway: pct(away.progressive_carries, away.carries_successful),
+        takeOnSuccessHome: pct(home.att_third_dribbles_success, home.att_third_dribbles),
+        takeOnSuccessAway: pct(away.att_third_dribbles_success, away.att_third_dribbles),
+        possChainDurationHome: getAvg(home.possession_time, home.chains),
+        possChainDurationAway: getAvg(away.possession_time, away.chains),
+        buildUpSpeedHome: getRate(home.zones_progressed, home.possession_time),
+        buildUpSpeedAway: getRate(away.zones_progressed, away.possession_time),
+        territoryRatioHome: pct(home.attacking_half_actions, home.attacking_half_actions + home.defensive_half_actions),
+        territoryRatioAway: pct(away.attacking_half_actions, away.attacking_half_actions + away.defensive_half_actions)
     };
 }

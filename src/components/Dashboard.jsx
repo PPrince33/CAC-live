@@ -156,11 +156,13 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                     <Lineup matchId={match.id} teamAId={match.team_a_id} teamBId={match.team_b_id} teamAName={teamAName} teamBName={teamBName} />
                 </div>
             )}
-
             {activeTab === 'passing' && (
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>PASSING SUMMARY</div>
+                        <CompactStat label="PROGRESSION RATE %" homeVal={`${stats.progRateHome}%`} awayVal={`${stats.progRateAway}%`} />
+                        <CompactStat label="PASS DIRECTNESS" homeVal={stats.directnessHome.toFixed(2)} awayVal={stats.directnessAway.toFixed(2)} />
+                        <CompactStat label="FT ENTRY RATE" homeVal={stats.ftEntryRateHome.toFixed(2)} awayVal={stats.ftEntryRateAway.toFixed(2)} />
                         <CompactStat label="TOTAL PASS (SUCCESSFUL)" homeVal={`${stats.home.pass_total} (${stats.home.pass_success})`} awayVal={`${stats.away.pass_total} (${stats.away.pass_success})`} />
                         <CompactStat label="PASS ACCURACY %" homeVal={`${stats.passAccHome}%`} awayVal={`${stats.passAccAway}%`} />
                         <CompactStat label="LONG BALLS" homeVal={stats.home.long_balls} awayVal={stats.away.long_balls} />
@@ -177,6 +179,11 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>ATTACKING PERFORMANCE</div>
+                        <CompactStat label="EXPECTED GOALS (xG)" homeVal={stats.xgHome.toFixed(2)} awayVal={stats.xgAway.toFixed(2)} />
+                        <CompactStat label="SHOT QUALITY (AVG xG)" homeVal={stats.shotQualityHome.toFixed(2)} awayVal={stats.shotQualityAway.toFixed(2)} />
+                        <CompactStat label="SHOT CREATION RATE" homeVal={stats.shotCreationRateHome.toFixed(1)} awayVal={stats.shotCreationRateAway.toFixed(1)} />
+                        <CompactStat label="BOX ENTRY EFFICIENCY %" homeVal={`${stats.boxEfficiencyHome}%`} awayVal={`${stats.boxEfficiencyAway}%`} />
+                        <CompactStat label="ATTACKING PACE (SEC)" homeVal={stats.attPaceHome.toFixed(1)} awayVal={stats.attPaceAway.toFixed(1)} />
                         <CompactStat label="TOTAL SHOT" homeVal={stats.home.shots} awayVal={stats.away.shots} />
                         <CompactStat label="SHOT ON TARGET" homeVal={stats.home.sot} awayVal={stats.away.sot} />
                         <CompactStat label="SHOTS INSIDE BOX" homeVal={stats.home.shots_inside_box} awayVal={stats.away.shots_inside_box} />
@@ -191,6 +198,8 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>DRIBBLING & CARRIES</div>
+                        <CompactStat label="CARRY PROG. RATE %" homeVal={`${stats.carryProgRateHome}%`} awayVal={`${stats.carryProgRateAway}%`} />
+                        <CompactStat label="FT TAKE-ON SUCCESS %" homeVal={`${stats.takeOnSuccessHome}%`} awayVal={`${stats.takeOnSuccessAway}%`} />
                         <CompactStat label="TOTAL DRIB (SUCCESS)" homeVal={`${stats.home.dribbles_attempted} (${stats.home.dribble_success})`} awayVal={`${stats.away.dribbles_attempted} (${stats.away.dribble_success})`} />
                         <CompactStat label="DRIBBLE ACCURACY %" homeVal={`${stats.dribbleAccHome}%`} awayVal={`${stats.dribbleAccAway}%`} />
                         <CompactStat label="SUCCESS DRIBBLES TO BOX" homeVal={stats.home.dribbles_to_box} awayVal={stats.away.dribbles_to_box} />
@@ -204,6 +213,11 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>DEFENSIVE ACTIONS</div>
+                        <CompactStat label="HIGH PRESS SUCCESS %" homeVal={`${stats.highPressSuccessHome}%`} awayVal={`${stats.highPressSuccessAway}%`} />
+                        <CompactStat label="COUNTER-PRESS RATE" homeVal={stats.counterPressRateHome.toFixed(2)} awayVal={stats.counterPressRateAway.toFixed(2)} />
+                        <CompactStat label="CHALLENGE INTENSITY" homeVal={stats.challengeIntensityHome.toFixed(2)} awayVal={stats.challengeIntensityAway.toFixed(2)} />
+                        <CompactStat label="DEF. ACTION DEPTH" homeVal={stats.defDepthHome.toFixed(1)} awayVal={stats.defDepthAway.toFixed(1)} />
+                        <CompactStat label="RECOVERY PACE (SEC)" homeVal={stats.recoveryPaceHome.toFixed(1)} awayVal={stats.recoveryPaceAway.toFixed(1)} />
                         <CompactStat label="TOTAL DEF ACTIONS" homeVal={stats.home.defensive_actions} awayVal={stats.away.defensive_actions} />
                         <CompactStat label="TACKLES (DEF 3RD)" homeVal={`${stats.home.tackles} (${stats.home.tackles_in_def_third})`} awayVal={`${stats.away.tackles} (${stats.away.tackles_in_def_third})`} />
                         <CompactStat label="INTERCEPTIONS (DEF 3RD)" homeVal={`${stats.home.interceptions} (${stats.home.interceptions_in_def_third})`} awayVal={`${stats.away.interceptions} (${stats.away.interceptions_in_def_third})`} />
@@ -222,12 +236,15 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>POSSESSION & ADVANCED</div>
+                        <CompactStat label="BUILD-UP SPEED (Z/S)" homeVal={stats.buildUpSpeedHome.toFixed(2)} awayVal={stats.buildUpSpeedAway.toFixed(2)} />
+                        <CompactStat label="POSS. CHAIN DUR (SEC)" homeVal={stats.possChainDurationHome.toFixed(1)} awayVal={stats.possChainDurationAway.toFixed(1)} />
+                        <CompactStat label="TERRITORY RATIO %" homeVal={`${stats.territoryRatioHome}%`} awayVal={`${stats.territoryRatioAway}%`} />
+                        <CompactStat label="FIELD TILT %" homeVal={`${stats.fieldTiltHome}%`} awayVal={`${stats.fieldTiltAway}%`} />
+                        <CompactStat label="xT GENERATED" homeVal={stats.home.xt_generated.toFixed(2)} awayVal={stats.away.xt_generated.toFixed(2)} />
                         <CompactStat label="POSSESSION CHAINS" homeVal={stats.home.chains} awayVal={stats.away.chains} />
                         <CompactStat label="AVG POSS. LENGTH" homeVal={stats.homePossLength.toFixed(1)} awayVal={stats.awayPossLength.toFixed(1)} />
                         <CompactStat label="ATTACKING 3RD ACTIONS" homeVal={stats.home.attacking_third_actions} awayVal={stats.away.attacking_third_actions} />
                         <CompactStat label="BOX TOUCHES" homeVal={stats.home.box_touches} awayVal={stats.away.box_touches} />
-                        <CompactStat label="xT GENERATED" homeVal={stats.home.xt_generated.toFixed(2)} awayVal={stats.away.xt_generated.toFixed(2)} />
-                        <CompactStat label="FIELD TILT %" homeVal={`${stats.fieldTiltHome}%`} awayVal={`${stats.fieldTiltAway}%`} />
                     </div>
                 </div>
             )}
