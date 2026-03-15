@@ -5,8 +5,8 @@ const MomentumChart = ({ data, teamAName, teamBName }) => {
     const maxVal = Math.max(1, ...data.map(d => Math.max(d.home, d.away)));
 
     return (
-        <div className="t-box t-shadow p-3">
-            <div className="text-xs font-black uppercase tracking-widest text-muted mb-3">MATCH MOMENTUM</div>
+        <div className="t-box p-3">
+            <div className="text-xs font-black uppercase tracking-widest mb-3">MATCH MOMENTUM</div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80 }}>
                 {data.map((d, i) => {
                     const hH = (d.home / maxVal) * 60;
