@@ -469,13 +469,13 @@ export function computeStats(events, match) {
     const homePossLength = home.chains === 0 ? 0 : (home.chain_events / home.chains);
     const awayPossLength = away.chains === 0 ? 0 : (away.chain_events / away.chains);
 
-    const passProxyPossession = (home.pass_total + away.pass_total) === 0 ? 50 : pct(home.pass_total, home.pass_total + away.pass_total);
+    const actionBasedPossession = (home.events_count + away.events_count) === 0 ? 50 : pct(home.events_count, home.events_count + away.events_count);
 
     const getRate = (n, d) => d === 0 ? 0 : (n / d);
     const getAvg = (sum, count) => count === 0 ? 0 : (sum / count);
 
     return {
-        home, away, maxMinute, keyEvents, possession: passProxyPossession,
+        home, away, maxMinute, keyEvents, possession: actionBasedPossession,
         passAccHome: pct(home.pass_success, home.pass_total),
         passAccAway: pct(away.pass_success, away.pass_total),
         dribbleAccHome: pct(home.dribble_success, home.dribbles_attempted),
