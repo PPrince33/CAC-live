@@ -142,7 +142,10 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <CompactStat label="TOTAL SHOTS" homeVal={stats.home.shots} awayVal={stats.away.shots} />
                         <CompactStat label="PASSES SUCCESSFUL" homeVal={stats.home.pass_success} awayVal={stats.away.pass_success} />
                         <CompactStat label="TACKLES & INT" homeVal={stats.home.tackles + stats.home.interceptions} awayVal={stats.away.tackles + stats.away.interceptions} />
-                        <CompactStat label="PPDA" homeVal={stats.ppdaHome} awayVal={stats.ppdaAway} />
+                        <CompactStat label="PPDA" 
+                            homeVal={stats.ppdaHome > 0 ? stats.ppdaHome.toFixed(1) : '-'} 
+                            awayVal={stats.ppdaAway > 0 ? stats.ppdaAway.toFixed(1) : '-'} 
+                        />
                         <CompactStat label="CARDS (Y/R)" homeVal={`${stats.home.yellow}/${stats.home.red}`} awayVal={`${stats.away.yellow}/${stats.away.red}`} />
                     </div>
 

@@ -87,6 +87,7 @@ export function computeStats(events, match) {
         interceptions_in_box: 0, interceptions_in_def_third: 0,
         recoveries_interception: 0, recoveries_tackle: 0,
         defensive_actions: 0, high_press_actions: 0,
+        ppda_actions: 0, ppda_passes: 0,
         // 6. Territory
         final_third_passes: 0, attacking_third_actions: 0, box_touches: 0,
         // 7. Possession & Advanced
@@ -109,6 +110,7 @@ export function computeStats(events, match) {
     events.forEach((ev, idx) => {
         const isHome = ev.team_id === match.team_a_id;
         const t = isHome ? home : away;
+        const oppT = isHome ? away : home;
         t.events_count++;
 
         const nextEv = events[idx + 1];
@@ -118,6 +120,10 @@ export function computeStats(events, match) {
         if (ev.location_box) {
             t.heatmap[ev.location_box] = (t.heatmap[ev.location_box] || 0) + 1;
         }
+
+        const { col } = boxToXY(ev.location_box, match.is_futsal);
+        const cols = match.is_futsal ? 8 : 12;
+        const inAttacking60 = col >= (cols * 0.4); // For PPDA, count actions in opponent's defensive 60%
 
         // Sequential / Chain Logic (Strict)
         const chainBreakingOutcomes = ['Miss', 'Interception', 'Lost Control', 'Unsuccessful', 'Foul', 'Yellow', 'Red'];
@@ -160,8 +166,8 @@ export function computeStats(events, match) {
             t.box_touches++;
         }
 
-        const successOutcomes = ['Successful', 'Goal', 'Assist', 'SoT Save', 'SoT Block'];
-        const isSuccess = successOutcomes.includes(ev.outcome);
+        const successOutcomes = ['Successful', 'Goal', 'Assist', 'SoT Save', 'SoT Block', 'Incomplete'];
+        const isSuccess = ['Successful', 'Goal', 'Assist', 'SoT Save', 'SoT Block'].includes(ev.outcome);
 
         const bin = Math.floor((ev.match_minute || 0) / 5) * 5;
         if (!momentumBins[bin]) momentumBins[bin] = { home: 0, away: 0 };
@@ -174,6 +180,12 @@ export function computeStats(events, match) {
             if (xtDiff > 0) t.xt_generated += xtDiff;
         }
 
+        // Expanded Defensive Actions for PPDA
+        const isDefensiveAction = ['Tackle', 'Interception', 'Block', 'Clearance'].includes(ev.action) || ['Yellow', 'Red', 'Foul'].includes(ev.outcome);
+        if (isDefensiveAction && inAttacking60) {
+            t.ppda_actions++;
+        }
+
         switch (ev.action) {
             case 'Pass':
                 t.pass_total++;
@@ -182,6 +194,13 @@ export function computeStats(events, match) {
                 if (ev.type === 'Corner') t.corners++;
                 if (ev.type === 'Free Kick') t.free_kicks++;
                 if (ev.type === 'Throw-in') t.throw_ins++;
+
+                if (ev.outcome === 'Successful' || ev.outcome === 'Assist' || ev.outcome === 'Incomplete') {
+                    // For PPDA, count opponent passes allowed in their defensive 60%
+                    if (!inAttacking60) {
+                        oppT.ppda_passes++;
+                    }
+                }
 
                 if (ev.outcome === 'Successful' || ev.outcome === 'Assist') {
                     t.pass_success++;
@@ -195,7 +214,7 @@ export function computeStats(events, match) {
                     t.assists++;
                     keyEvents.push({ ...ev, display: 'Assist', emoji: '👟', isHome, player_name: ev.player_name, jersey_number: ev.jersey_number });
                 }
-                if (ev.outcome === 'Interception') {
+                if (ev.outcome === 'Interception' || ev.action === 'Interception') {
                     const interceptorTeamId = isHome ? match.team_b_id : match.team_a_id;
                     const interceptorT = isHome ? away : home;
                     interceptorT.interceptions++;
@@ -205,9 +224,7 @@ export function computeStats(events, match) {
                     if (nextEv && nextEv.team_id === interceptorTeamId) {
                         interceptorT.recoveries_interception++;
                     }
-                    const { col } = boxToXY(startBox, match.is_futsal);
-                    const cols = match.is_futsal ? 8 : 12;
-                    if (col >= cols - 3) interceptorT.high_press_actions++;
+                    if (inAttThirdStart) interceptorT.high_press_actions++;
                 }
                 break;
             case 'Shot':
@@ -235,7 +252,9 @@ export function computeStats(events, match) {
                 }
                 break;
             case 'Tackle':
-                t.tackles++;
+            case 'Block':
+            case 'Clearance':
+                if (ev.action === 'Tackle') t.tackles++;
                 t.defensive_actions++;
                 if (inAttThirdStart) t.high_press_actions++;
                 if (isInDefensiveBox(startBox, match.is_futsal)) t.tackles_in_box++;
@@ -332,8 +351,8 @@ export function computeStats(events, match) {
     hProb = Math.max(1, Math.min(99, Math.round(hProb)));
     aProb = 100 - hProb;
 
-    const ppdaHomeStr = home.defensive_actions === 0 ? "15.0+" : (away.pass_total / home.defensive_actions).toFixed(1);
-    const ppdaAwayStr = away.defensive_actions === 0 ? "15.0+" : (home.pass_total / away.defensive_actions).toFixed(1);
+    const ppdaHome = home.ppda_actions === 0 ? 0 : (home.ppda_passes / home.ppda_actions);
+    const ppdaAway = away.ppda_actions === 0 ? 0 : (away.ppda_passes / away.ppda_actions);
 
     const totalFtPasses = home.final_third_passes + away.final_third_passes;
     const fieldTiltHome = pct(home.final_third_passes, totalFtPasses);
@@ -362,8 +381,8 @@ export function computeStats(events, match) {
         convRateAway: pct(away.goals, away.shots),
         winProbHome: hProb, winProbAway: aProb,
         isLive: match.status === 'Live',
-        ppdaHome: parseFloat(ppdaHomeStr) || 0,
-        ppdaAway: parseFloat(ppdaAwayStr) || 0,
+        ppdaHome: ppdaHome || 0,
+        ppdaAway: ppdaAway || 0,
         fieldTiltHome, fieldTiltAway,
         attThirdHome, attThirdAway,
         homePossLength, awayPossLength,
