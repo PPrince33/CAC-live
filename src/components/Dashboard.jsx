@@ -6,6 +6,7 @@ import CompactStat from './CompactStat';
 import MomentumChart from './MomentumChart';
 import FilteredHeatmap from './FilteredHeatmap';
 import Lineup from './Lineup';
+import MatchEvents from './MatchEvents';
 
 const Dashboard = ({ match: initialMatch, onBack }) => {
     const [match, setMatch] = useState(initialMatch);
@@ -58,7 +59,7 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
     const scoreA = stats.home.goals;
     const scoreB = stats.away.goals;
 
-    const tabs = ['overview', 'passing', 'attacking', 'dribbling', 'defense', 'advanced', 'heatmap'];
+    const tabs = ['overview', 'passing', 'attacking', 'dribbling', 'defense', 'advanced', 'heatmap', 'timeline'];
 
     return (
         <div className="pb-12">
@@ -134,20 +135,9 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         </div>
                     )}
 
-                    <Lineup matchId={match.id} teamAId={match.team_a_id} teamBId={match.team_b_id} teamAName={teamAName} teamBName={teamBName} />
-
-                    <div className="t-box p-3 mb-4">
-                        <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>KEY PERFORMANCE</div>
-                        <TugOfWar label="POSSESSION" home={stats.possession} away={100 - stats.possession} />
-                        <TugOfWar label="FIELD TILT" home={stats.fieldTiltHome} away={stats.fieldTiltAway} />
-                        <CompactStat label="TOTAL SHOTS" homeVal={stats.home.shots} awayVal={stats.away.shots} />
-                        <CompactStat label="PASSES SUCCESSFUL" homeVal={stats.home.pass_success} awayVal={stats.away.pass_success} />
-                        <CompactStat label="TACKLES & INT" homeVal={stats.home.tackles + stats.home.interceptions} awayVal={stats.away.tackles + stats.away.interceptions} />
-                        <CompactStat label="PPDA" homeVal={stats.ppdaHome} awayVal={stats.ppdaAway} />
-                        <CompactStat label="CARDS (Y/R)" homeVal={`${stats.home.yellow}/${stats.home.red}`} awayVal={`${stats.away.yellow}/${stats.away.red}`} />
-                    </div>
-
                     <MomentumChart data={stats.momentumData} teamAName={teamAName} teamBName={teamBName} />
+
+                    <Lineup matchId={match.id} teamAId={match.team_a_id} teamBId={match.team_b_id} teamAName={teamAName} teamBName={teamBName} />
                 </div>
             )}
 
@@ -227,6 +217,10 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                     <FilteredHeatmap events={events} match={match} teamId={match.team_a_id} teamName={teamAName} color="var(--red)" isEndLocation={showEndHeatmap} />
                     <FilteredHeatmap events={events} match={match} teamId={match.team_b_id} teamName={teamBName} color="var(--blue)" isEndLocation={showEndHeatmap} />
                 </div>
+            )}
+
+            {activeTab === 'timeline' && (
+                <MatchEvents keyEvents={stats.keyEvents} teamAName={teamAName} teamBName={teamBName} />
             )}
         </div>
     );

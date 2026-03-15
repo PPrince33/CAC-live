@@ -26,32 +26,52 @@ const Lineup = ({ matchId, teamAId, teamBId, teamAName, teamBName }) => {
     if (loading) return <div className="text-[10px] font-black uppercase animate-pulse">Loading Lineups...</div>;
     if (lineups.teamA.length === 0 && lineups.teamB.length === 0) return null;
 
-    const renderList = (players, teamName, isHome) => (
-        <div className="flex-1">
-            <div className={`text-[10px] font-black uppercase mb-2 pb-1 border-b-2 border-black ${isHome ? 'text-red' : 'text-blue'}`}>
-                {teamName}
+    const renderTable = (players, teamName, isHome) => {
+        const starters = players.filter(p => p.is_starting);
+        const subs = players.filter(p => !p.is_starting);
+
+        const renderRows = (list) => list.map(p => (
+            <tr key={p.id} className="text-[10px] font-bold">
+                <td className="py-0.5 w-6 opacity-50">{p.jersey_number}</td>
+                <td className={`py-0.5 ${!p.is_starting ? 'text-muted' : ''}`}>{p.player_name}</td>
+                <td className="py-0.5 text-right text-[8px] uppercase opacity-50">{p.position}</td>
+            </tr>
+        ));
+
+        return (
+            <div className="flex-1">
+                <div className={`text-[10px] font-black uppercase mb-2 pb-1 border-b-2 border-black ${isHome ? 'text-red' : 'text-blue'}`}>
+                    {teamName}
+                </div>
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="text-[8px] uppercase opacity-30 text-left">
+                            <th className="font-black">#</th>
+                            <th className="font-black">PLAYER</th>
+                            <th className="font-black text-right">POS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {renderRows(starters)}
+                        {subs.length > 0 && (
+                            <>
+                                <tr><td colSpan="3" className="py-2 opacity-30 text-[8px] font-black uppercase border-b border-black">SUBSTITUTES</td></tr>
+                                {renderRows(subs)}
+                            </>
+                        )}
+                    </tbody>
+                </table>
             </div>
-            <div className="flex flex-col gap-1">
-                {players.sort((a,b) => (a.is_starting === b.is_starting ? 0 : a.is_starting ? -1 : 1)).map((p, i) => (
-                    <div key={p.id} className="flex justify-between items-center text-[10px] font-bold">
-                        <span className={p.is_starting ? '' : 'text-muted'}>
-                            {p.jersey_number && <span className="mr-1 opacity-50">#{p.jersey_number}</span>}
-                            {p.player_name}
-                        </span>
-                        <span className="text-[8px] uppercase opacity-50">{p.position}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="t-box p-3 mb-4 bg-white">
             <div className="text-[10px] font-black uppercase mb-3 opacity-50">MATCH LINEUPS</div>
-            <div className="flex gap-4">
-                {renderList(lineups.teamA, teamAName, true)}
+            <div className="flex gap-6">
+                {renderTable(lineups.teamA, teamAName, true)}
                 <div style={{ width: 1, background: '#000', opacity: 0.1 }}></div>
-                {renderList(lineups.teamB, teamBName, false)}
+                {renderTable(lineups.teamB, teamBName, false)}
             </div>
         </div>
     );
