@@ -135,6 +135,17 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         </div>
                     )}
 
+                    <div className="t-box p-3 mb-4">
+                        <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>KEY PERFORMANCE</div>
+                        <TugOfWar label="POSSESSION" home={stats.possession} away={100 - stats.possession} />
+                        <TugOfWar label="FIELD TILT" home={stats.fieldTiltHome} away={stats.fieldTiltAway} />
+                        <CompactStat label="TOTAL SHOTS" homeVal={stats.home.shots} awayVal={stats.away.shots} />
+                        <CompactStat label="PASSES SUCCESSFUL" homeVal={stats.home.pass_success} awayVal={stats.away.pass_success} />
+                        <CompactStat label="TACKLES & INT" homeVal={stats.home.tackles + stats.home.interceptions} awayVal={stats.away.tackles + stats.away.interceptions} />
+                        <CompactStat label="PPDA" homeVal={stats.ppdaHome} awayVal={stats.ppdaAway} />
+                        <CompactStat label="CARDS (Y/R)" homeVal={`${stats.home.yellow}/${stats.home.red}`} awayVal={`${stats.away.yellow}/${stats.away.red}`} />
+                    </div>
+
                     <MomentumChart data={stats.momentumData} teamAName={teamAName} teamBName={teamBName} />
 
                     <Lineup matchId={match.id} teamAId={match.team_a_id} teamBId={match.team_b_id} teamAName={teamAName} teamBName={teamBName} />
