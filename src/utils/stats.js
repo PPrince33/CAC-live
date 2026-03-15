@@ -73,6 +73,7 @@ export function computeStats(events, match) {
         // 2. Passing
         pass_total: 0, pass_success: 0, progressive_passes: 0, key_passes: 0, assists: 0,
         goal_kicks: 0, gk_throws: 0, corners: 0, free_kicks: 0, throw_ins: 0,
+        long_balls: 0, passes_in_final_third: 0, passes_in_box: 0,
         // 3. Attacking
         final_third_entries: 0, box_entries: 0, shot_creation_actions: 0, deep_completions: 0,
         shots_inside_box: 0, shots_outside_box: 0, shot_free_kicks: 0, shot_penalties: 0,
@@ -85,7 +86,7 @@ export function computeStats(events, match) {
         tackles: 0, interceptions: 0, fouls: 0, yellow: 0, red: 0,
         tackles_in_box: 0, tackles_in_def_third: 0,
         interceptions_in_box: 0, interceptions_in_def_third: 0,
-        recoveries_interception: 0, recoveries_tackle: 0,
+        recoveries: 0, recoveries_def_third: 0, recoveries_box: 0,
         defensive_actions: 0, high_press_actions: 0,
         ppda_actions: 0, ppda_passes: 0,
         // 6. Territory
@@ -121,9 +122,9 @@ export function computeStats(events, match) {
             t.heatmap[ev.location_box] = (t.heatmap[ev.location_box] || 0) + 1;
         }
 
-        const { col } = boxToXY(ev.location_box, match.is_futsal);
+        const { col: startCol, row: startRow } = boxToXY(ev.location_box, match.is_futsal);
         const cols = match.is_futsal ? 8 : 12;
-        const inAttacking60 = col >= (cols * 0.4); // For PPDA, count actions in opponent's defensive 60%
+        const inAttacking60 = startCol >= (cols * 0.4); // For PPDA, count actions in opponent's defensive 60%
 
         // Sequential / Chain Logic (Strict)
         const chainBreakingOutcomes = ['Miss', 'Interception', 'Lost Control', 'Unsuccessful', 'Foul', 'Yellow', 'Red'];
@@ -153,6 +154,8 @@ export function computeStats(events, match) {
         // Advanced Base Parsing
         const endBox = ev.end_location_box;
         const startBox = ev.location_box;
+
+        const { col: endCol } = boxToXY(endBox, match.is_futsal);
 
         const enteredFinalThird = !isInAttackingThird(startBox, match.is_futsal) && isInAttackingThird(endBox, match.is_futsal);
         const enteredPenaltyBox = !isInPenaltyBox(startBox, match.is_futsal) && isInPenaltyBox(endBox, match.is_futsal);
@@ -204,7 +207,20 @@ export function computeStats(events, match) {
 
                 if (ev.outcome === 'Successful' || ev.outcome === 'Assist') {
                     t.pass_success++;
-                    if (isInAttackingThird(endBox, match.is_futsal)) t.final_third_passes++;
+                    if (isInAttackingThird(endBox, match.is_futsal)) {
+                        t.final_third_passes++;
+                        t.passes_in_final_third++;
+                    }
+                    if (isInPenaltyBox(endBox, match.is_futsal)) {
+                        t.passes_in_box++;
+                    }
+                    
+                    const colDiff = endCol - startCol;
+                    const longThreshold = match.is_futsal ? 2 : 3;
+                    if (colDiff > longThreshold) {
+                        t.long_balls++;
+                    }
+
                     if (enteredFinalThird) t.final_third_entries++;
                     if (enteredPenaltyBox) t.box_entries++;
                     if (isProgressiveAction) t.progressive_passes++;
@@ -222,7 +238,9 @@ export function computeStats(events, match) {
                     if (isInDefensiveBox(startBox, match.is_futsal)) interceptorT.interceptions_in_box++;
                     if (isInDefensiveThird(startBox, match.is_futsal)) interceptorT.interceptions_in_def_third++;
                     if (nextEv && nextEv.team_id === interceptorTeamId) {
-                        interceptorT.recoveries_interception++;
+                        interceptorT.recoveries++;
+                        if (isInDefensiveThird(startBox, match.is_futsal)) interceptorT.recoveries_def_third++;
+                        if (isInDefensiveBox(startBox, match.is_futsal)) interceptorT.recoveries_box++;
                     }
                     if (inAttThirdStart) interceptorT.high_press_actions++;
                 }
@@ -260,7 +278,9 @@ export function computeStats(events, match) {
                 if (isInDefensiveBox(startBox, match.is_futsal)) t.tackles_in_box++;
                 if (isInDefensiveThird(startBox, match.is_futsal)) t.tackles_in_def_third++;
                 if (ev.outcome === 'Successful' && nextEv && nextEv.team_id === ev.team_id) {
-                    t.recoveries_tackle++;
+                    t.recoveries++;
+                    if (isInDefensiveThird(startBox, match.is_futsal)) t.recoveries_def_third++;
+                    if (isInDefensiveBox(startBox, match.is_futsal)) t.recoveries_box++;
                 }
                 if (ev.outcome === 'Foul') t.fouls++;
                 if (ev.outcome === 'Yellow') {

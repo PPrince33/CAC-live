@@ -163,13 +163,12 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>PASSING SUMMARY</div>
                         <CompactStat label="TOTAL PASS (SUCCESSFUL)" homeVal={`${stats.home.pass_total} (${stats.home.pass_success})`} awayVal={`${stats.away.pass_total} (${stats.away.pass_success})`} />
                         <CompactStat label="PASS ACCURACY %" homeVal={`${stats.passAccHome}%`} awayVal={`${stats.passAccAway}%`} />
-                        <CompactStat label="KEY PASSES" homeVal={stats.home.key_passes || 0} awayVal={stats.away.key_passes || 0} />
+                        <CompactStat label="LONG BALLS" homeVal={stats.home.long_balls} awayVal={stats.away.long_balls} />
                         <CompactStat label="PROG. PASSES" homeVal={stats.home.progressive_passes} awayVal={stats.away.progressive_passes} />
                         <CompactStat label="ASSISTS" homeVal={stats.home.assists} awayVal={stats.away.assists} />
-                        <CompactStat label="FINAL THIRD ENTRIES" homeVal={stats.home.final_third_entries} awayVal={stats.away.final_third_entries} />
-                        <CompactStat label="PENALTY BOX ENTRIES" homeVal={stats.home.box_entries} awayVal={stats.away.box_entries} />
+                        <CompactStat label="PASSES IN FINAL 3RD" homeVal={stats.home.passes_in_final_third} awayVal={stats.away.passes_in_final_third} />
+                        <CompactStat label="PASS IN BOX" homeVal={stats.home.passes_in_box} awayVal={stats.away.passes_in_box} />
                         <CompactStat label="DEEP COMPLETIONS" homeVal={stats.home.deep_completions} awayVal={stats.away.deep_completions} />
-                        <CompactStat label="PASSES IN ATTACK 3RD" homeVal={stats.home.final_third_passes} awayVal={stats.away.final_third_passes} />
                     </div>
                 </div>
             )}
@@ -206,9 +205,13 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>DEFENSIVE ACTIONS</div>
                         <CompactStat label="TOTAL DEF ACTIONS" homeVal={stats.home.defensive_actions} awayVal={stats.away.defensive_actions} />
-                        <CompactStat label="TACKLES" homeVal={stats.home.tackles} awayVal={stats.away.tackles} />
-                        <CompactStat label="PASS INTERCEPTIONS" homeVal={stats.home.interceptions} awayVal={stats.away.interceptions} />
-                        <CompactStat label="RECOVERIES" homeVal={stats.home.recoveries_interception + stats.home.recoveries_tackle} awayVal={stats.away.recoveries_interception + stats.away.recoveries_tackle} />
+                        <CompactStat label="TACKLES (DEF 3RD)" homeVal={`${stats.home.tackles} (${stats.home.tackles_in_def_third})`} awayVal={`${stats.away.tackles} (${stats.away.tackles_in_def_third})`} />
+                        <CompactStat label="INTERCEPTIONS (DEF 3RD)" homeVal={`${stats.home.interceptions} (${stats.home.interceptions_in_def_third})`} awayVal={`${stats.away.interceptions} (${stats.away.interceptions_in_def_third})`} />
+                        <CompactStat label="RECOVERIES (TOTAL)" homeVal={stats.home.recoveries} awayVal={stats.away.recoveries} />
+                        <CompactStat label="RECOVERIES (DEF 3RD)" homeVal={stats.home.recoveries_def_third} awayVal={stats.away.recoveries_def_third} />
+                        <CompactStat label="RECOVERIES (BOX)" homeVal={stats.home.recoveries_box} awayVal={stats.away.recoveries_box} />
+                        <CompactStat label="BLOCKS" homeVal={events.filter(ev => ev.team_id === match.team_a_id && ev.action === 'Block').length} awayVal={events.filter(ev => ev.team_id === match.team_b_id && ev.action === 'Block').length} />
+                        <CompactStat label="CLEARANCES" homeVal={events.filter(ev => ev.team_id === match.team_a_id && ev.action === 'Clearance').length} awayVal={events.filter(ev => ev.team_id === match.team_b_id && ev.action === 'Clearance').length} />
                         <CompactStat label="HIGH PRESS ACTIONS" homeVal={stats.home.high_press_actions} awayVal={stats.away.high_press_actions} />
                         <CompactStat label="FOULS" homeVal={stats.home.fouls} awayVal={stats.away.fouls} />
                     </div>
