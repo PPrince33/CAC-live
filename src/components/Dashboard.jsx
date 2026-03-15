@@ -163,8 +163,12 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>PASSING SUMMARY</div>
                         <CompactStat label="TOTAL PASS (SUCCESSFUL)" homeVal={`${stats.home.pass_total} (${stats.home.pass_success})`} awayVal={`${stats.away.pass_total} (${stats.away.pass_success})`} />
                         <CompactStat label="PASS ACCURACY %" homeVal={`${stats.passAccHome}%`} awayVal={`${stats.passAccAway}%`} />
+                        <CompactStat label="KEY PASSES" homeVal={stats.home.key_passes || 0} awayVal={stats.away.key_passes || 0} />
                         <CompactStat label="PROG. PASSES" homeVal={stats.home.progressive_passes} awayVal={stats.away.progressive_passes} />
                         <CompactStat label="ASSISTS" homeVal={stats.home.assists} awayVal={stats.away.assists} />
+                        <CompactStat label="FINAL THIRD ENTRIES" homeVal={stats.home.final_third_entries} awayVal={stats.away.final_third_entries} />
+                        <CompactStat label="PENALTY BOX ENTRIES" homeVal={stats.home.box_entries} awayVal={stats.away.box_entries} />
+                        <CompactStat label="DEEP COMPLETIONS" homeVal={stats.home.deep_completions} awayVal={stats.away.deep_completions} />
                         <CompactStat label="PASSES IN ATTACK 3RD" homeVal={stats.home.final_third_passes} awayVal={stats.away.final_third_passes} />
                     </div>
                 </div>
@@ -176,6 +180,9 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>ATTACKING PERFORMANCE</div>
                         <CompactStat label="TOTAL SHOT" homeVal={stats.home.shots} awayVal={stats.away.shots} />
                         <CompactStat label="SHOT ON TARGET" homeVal={stats.home.sot} awayVal={stats.away.sot} />
+                        <CompactStat label="SHOTS INSIDE BOX" homeVal={stats.home.shots_inside_box} awayVal={stats.away.shots_inside_box} />
+                        <CompactStat label="SHOTS OUTSIDE BOX" homeVal={stats.home.shots_outside_box} awayVal={stats.away.shots_outside_box} />
+                        <CompactStat label="SHOT CREATION ACTIONS" homeVal={stats.home.shot_creation_actions} awayVal={stats.away.shot_creation_actions} />
                         <CompactStat label="CONVERSION RATE" homeVal={`${stats.convRateHome}%`} awayVal={`${stats.convRateAway}%`} />
                     </div>
                 </div>
@@ -185,8 +192,11 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>DRIBBLING & CARRIES</div>
+                        <CompactStat label="TOTAL DRIB (SUCCESS)" homeVal={`${stats.home.dribbles_attempted} (${stats.home.dribble_success})`} awayVal={`${stats.away.dribbles_attempted} (${stats.away.dribble_success})`} />
+                        <CompactStat label="DRIBBLE ACCURACY %" homeVal={`${stats.dribbleAccHome}%`} awayVal={`${stats.dribbleAccAway}%`} />
                         <CompactStat label="SUCCESS DRIBBLES TO BOX" homeVal={stats.home.dribbles_to_box} awayVal={stats.away.dribbles_to_box} />
                         <CompactStat label="SUCCESS DRIBBLES IN ATT 3RD" homeVal={stats.home.dribbles_in_att_third} awayVal={stats.away.dribbles_in_att_third} />
+                        <CompactStat label="PROGRESSIVE CARRIES" homeVal={stats.home.progressive_carries} awayVal={stats.away.progressive_carries} />
                     </div>
                 </div>
             )}
@@ -195,8 +205,12 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                 <div>
                     <div className="t-box p-3 mb-4">
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>DEFENSIVE ACTIONS</div>
+                        <CompactStat label="TOTAL DEF ACTIONS" homeVal={stats.home.defensive_actions} awayVal={stats.away.defensive_actions} />
                         <CompactStat label="TACKLES" homeVal={stats.home.tackles} awayVal={stats.away.tackles} />
                         <CompactStat label="PASS INTERCEPTIONS" homeVal={stats.home.interceptions} awayVal={stats.away.interceptions} />
+                        <CompactStat label="RECOVERIES" homeVal={stats.home.recoveries_interception + stats.home.recoveries_tackle} awayVal={stats.away.recoveries_interception + stats.away.recoveries_tackle} />
+                        <CompactStat label="HIGH PRESS ACTIONS" homeVal={stats.home.high_press_actions} awayVal={stats.away.high_press_actions} />
+                        <CompactStat label="FOULS" homeVal={stats.home.fouls} awayVal={stats.away.fouls} />
                     </div>
                 </div>
             )}
@@ -207,6 +221,8 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>POSSESSION & ADVANCED</div>
                         <CompactStat label="POSSESSION CHAINS" homeVal={stats.home.chains} awayVal={stats.away.chains} />
                         <CompactStat label="AVG POSS. LENGTH" homeVal={stats.homePossLength.toFixed(1)} awayVal={stats.awayPossLength.toFixed(1)} />
+                        <CompactStat label="ATTACKING 3RD ACTIONS" homeVal={stats.home.attacking_third_actions} awayVal={stats.away.attacking_third_actions} />
+                        <CompactStat label="BOX TOUCHES" homeVal={stats.home.box_touches} awayVal={stats.away.box_touches} />
                         <CompactStat label="xT GENERATED" homeVal={stats.home.xt_generated.toFixed(2)} awayVal={stats.away.xt_generated.toFixed(2)} />
                         <CompactStat label="FIELD TILT %" homeVal={`${stats.fieldTiltHome}%`} awayVal={`${stats.fieldTiltAway}%`} />
                     </div>
