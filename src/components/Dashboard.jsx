@@ -146,7 +146,9 @@ const Dashboard = ({ match: initialMatch, onBack }) => {
                         <CompactStat label="CARDS (Y/R)" homeVal={`${stats.home.yellow}/${stats.home.red}`} awayVal={`${stats.away.yellow}/${stats.away.red}`} />
                     </div>
 
-                    <MomentumChart data={stats.momentumData} teamAName={teamAName} teamBName={teamBName} />
+                    <div className="mb-6">
+                        <MomentumChart data={stats.momentumData} teamAName={teamAName} teamBName={teamBName} />
+                    </div>
 
                     <Lineup matchId={match.id} teamAId={match.team_a_id} teamBId={match.team_b_id} teamAName={teamAName} teamBName={teamBName} />
                 </div>
