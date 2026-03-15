@@ -50,23 +50,28 @@ const MatchListScreen = ({ tournament, onSelect, onBack }) => {
                             {m.is_futsal && <span className="text-xs font-bold text-muted">FUTSAL</span>}
                         </div>
 
-                        <div className="flex justify-between items-center font-black text-base pb-2 gap-2" style={{ borderBottom: '2px solid #000' }}>
-                            <div className="flex-1 flex items-center gap-2 min-w-0">
-                                {m.team_a?.Logo && <img src={m.team_a.Logo} alt="" className="w-6 h-6 object-contain" />}
-                                <span className="truncate uppercase" style={{ lineHeight: 1.2 }}>{m.team_a?.name}</span>
+                        <div className="flex justify-between items-center pb-2 gap-4" style={{ borderBottom: '2px solid #000' }}>
+                            <div className="flex flex-col gap-2 min-w-0 flex-1">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    {m.team_a?.Logo && <img src={m.team_a.Logo} alt="" className="w-5 h-5 object-contain" />}
+                                    <span className="truncate uppercase font-black text-sm" style={{ lineHeight: 1 }}>{m.team_a?.name}</span>
+                                </div>
+                                <div className="flex items-center gap-2 min-w-0">
+                                    {m.team_b?.Logo && <img src={m.team_b.Logo} alt="" className="w-5 h-5 object-contain" />}
+                                    <span className="truncate uppercase font-black text-sm" style={{ lineHeight: 1 }}>{m.team_b?.name}</span>
+                                </div>
                             </div>
-                            {hasScore ? (
-                                <span style={{ fontFamily: 'JetBrains Mono', fontSize: 22, fontWeight: 900, letterSpacing: 2 }}>
-                                    <span className="text-red">{m.team_a_score}</span>
-                                    <span className="text-muted" style={{ margin: '0 4px' }}>:</span>
-                                    <span className="text-blue">{m.team_b_score}</span>
-                                </span>
-                            ) : (
-                                <span className="text-xs font-bold px-2 py-1" style={{ background: '#000', color: '#fff' }}>VS</span>
-                            )}
-                            <div className="flex-1 flex items-center justify-end gap-2 min-w-0">
-                                <span className="truncate uppercase text-right" style={{ lineHeight: 1.2 }}>{m.team_b?.name}</span>
-                                {m.team_b?.Logo && <img src={m.team_b.Logo} alt="" className="w-6 h-6 object-contain" />}
+
+                            <div className="flex-none flex items-center justify-center min-w-[60px]">
+                                {hasScore ? (
+                                    <div className="flex items-center gap-2" style={{ fontFamily: 'JetBrains Mono', fontSize: 18, fontWeight: 900 }}>
+                                        <span className="text-red">{m.team_a_score}</span>
+                                        <span className="text-muted opacity-30">:</span>
+                                        <span className="text-blue">{m.team_b_score}</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-[10px] font-black px-1.5 py-0.5" style={{ background: '#000', color: '#fff' }}>VS</span>
+                                )}
                             </div>
                         </div>
 
