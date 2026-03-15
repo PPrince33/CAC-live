@@ -34,7 +34,7 @@ const MatchEvents = ({ keyEvents, teamAName, teamBName }) => {
                                         {ev.player_name}
                                     </span>
                                     <span className="text-[9px] font-black opacity-30">
-                                        #{ev.jersey_number}
+                                        {ev.jersey_number}
                                     </span>
                                 </div>
                             </div>

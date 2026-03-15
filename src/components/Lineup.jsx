@@ -29,12 +29,13 @@ const Lineup = ({ matchId, teamAId, teamBId, teamAName, teamBName }) => {
     const renderTable = (players, teamName, isHome) => {
         const starters = players.filter(p => p.is_starting);
         const subs = players.filter(p => !p.is_starting);
+        const hasPosition = players.some(p => p.position);
 
         const renderRows = (list) => list.map(p => (
             <tr key={p.id} className="text-[10px] font-bold">
-                <td className="py-0.5 w-6 opacity-50">{p.jersey_number}</td>
                 <td className={`py-0.5 ${!p.is_starting ? 'text-muted' : ''}`}>{p.player_name}</td>
-                <td className="py-0.5 text-right text-[8px] uppercase opacity-50">{p.position}</td>
+                <td className="py-0.5 text-center w-8 opacity-50">{p.jersey_number}</td>
+                {hasPosition && <td className="py-0.5 text-right text-[8px] uppercase opacity-50">{p.position}</td>}
             </tr>
         ));
 
@@ -43,19 +44,19 @@ const Lineup = ({ matchId, teamAId, teamBId, teamAName, teamBName }) => {
                 <div className={`text-[10px] font-black uppercase mb-2 pb-1 border-b-2 border-black ${isHome ? 'text-red' : 'text-blue'}`}>
                     {teamName}
                 </div>
-                <table className="w-full border-collapse">
+                <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="text-[8px] uppercase opacity-30 text-left">
-                            <th className="font-black">#</th>
+                        <tr className="text-[8px] uppercase opacity-30">
                             <th className="font-black">PLAYER</th>
-                            <th className="font-black text-right">POS</th>
+                            <th className="font-black text-center">NO.</th>
+                            {hasPosition && <th className="font-black text-right">POS</th>}
                         </tr>
                     </thead>
                     <tbody>
                         {renderRows(starters)}
                         {subs.length > 0 && (
                             <>
-                                <tr><td colSpan="3" className="py-2 opacity-30 text-[8px] font-black uppercase border-b border-black">SUBSTITUTES</td></tr>
+                                <tr><td colSpan={hasPosition ? 3 : 2} className="py-2 opacity-30 text-[8px] font-black uppercase border-b border-black">SUBSTITUTES</td></tr>
                                 {renderRows(subs)}
                             </>
                         )}
