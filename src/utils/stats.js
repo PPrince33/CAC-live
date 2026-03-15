@@ -458,8 +458,8 @@ export function computeStats(events, match) {
     const ppdaHome = home.ppda_actions === 0 ? 0 : (home.ppda_passes / home.ppda_actions);
     const ppdaAway = away.ppda_actions === 0 ? 0 : (away.ppda_passes / away.ppda_actions);
 
-    const totalFtPasses = home.final_third_passes + away.final_third_passes;
-    const fieldTiltHome = pct(home.final_third_passes, totalFtPasses);
+    const totalFtActions = home.attacking_third_actions + away.attacking_third_actions;
+    const fieldTiltHome = pct(home.attacking_third_actions, totalFtActions);
     const fieldTiltAway = 100 - fieldTiltHome;
 
     const totalAttActions = home.attacking_third_actions + away.attacking_third_actions;
