@@ -1,24 +1,49 @@
-# CAC Live Analytics Dashboard
+# CAC-live Match Analytics
 
-Standalone live match analytics dashboard.
+A high-performance, real-time football match analytics dashboard built with React and Vite, powered by Supabase.
 
-## Setup Instructions
+## 🚀 Key Features
+- **Real-time Stats**: Live possession, shot maps, and win probability.
+- **Advanced Metrics**: Expected Threat (xT), Field Tilt %, and Passing Accuracy.
+- **Team Lineups**: Dynamic roster displays fetched from Supabase.
+- **Minimalist UI**: Technical terminal-style aesthetic with ultra-small high-density data views.
+- **Secure**: Modern configuration management using environment variables.
 
-1.  **Move this folder**: Drag this `standalone-dashboard` folder to your Desktop or a new location.
-2.  **Initialize Git**: Open your terminal in this new folder and run:
-    ```bash
-    git init
-    git add .
-    git commit -m "Initial commit"
-    ```
-3.  **Create New Repo on GitHub**: Create a new repository on GitHub named `CAC-Live-Analytics`.
-4.  **Push to GitHub**:
-    ```bash
-    git remote add origin https://github.com/PPrince33/CAC-Live-Analytics.git
-    git branch -M main
-    git push -u origin main
-    ```
-5.  **Environment Variables**: Create a `.env` file (copy from `.env.example`) and add your Supabase credentials.
+## 🛠 Tech Stack
+- **Frontend**: React, Vite
+- **Backend**: Supabase (PostgreSQL, Realtime)
+- **Styling**: Vanilla CSS (Custom Terminal Design System)
+- **Testing**: Vitest
 
-## Local Development
-Run `npm install` and then `npm run dev` to see the dashboard locally.
+## 📦 Getting Started
+
+### 1. Installation
+```bash
+npm install
+```
+
+### 2. Configuration
+Create a `.env` file in the root directory:
+```env
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+### 3. Development
+```bash
+npm run dev
+```
+
+### 4. Build
+```bash
+npm run build
+```
+
+## 🧪 Testing
+Run the automated test suite to verify calculation logic:
+```bash
+npm run test
+```
+
+---
+*Created by PP33 // Refactored by Antigravity*
