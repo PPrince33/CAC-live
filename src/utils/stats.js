@@ -14,7 +14,8 @@ export const isInAttackingThird = (locBox, isFutsal) => {
     if (!locBox) return false;
     const { col } = boxToXY(locBox, isFutsal);
     const cols = isFutsal ? 8 : 12;
-    return col >= cols - 3;
+    const threshold = isFutsal ? 3 : 4; 
+    return col >= cols - threshold;
 };
 
 export const isInPenaltyBox = (locBox, isFutsal) => {
@@ -37,22 +38,18 @@ export const isInDefensiveBox = (locBox, isFutsal) => {
 
 export const isInDefensiveThird = (locBox, isFutsal) => {
     if (!locBox) return false;
-    if (isFutsal) {
-        return locBox <= 12;
-    } else {
-        return locBox <= 32;
-    }
+    const { col } = boxToXY(locBox, isFutsal);
+    const threshold = isFutsal ? 3 : 4; 
+    return col < threshold;
 };
 
 export const isProgressive = (startBox, endBox, isFutsal) => {
     if (!startBox || !endBox) return false;
     const startNode = boxToXY(startBox, isFutsal);
     const endNode = boxToXY(endBox, isFutsal);
-    // Must move forward by at least 2 columns
     return endNode.col >= startNode.col + 2;
 };
 
-// Distance Helper (Simplified Euclidean)
 function getDistance(startBox, endBox, isFutsal) {
     if (!startBox || !endBox) return 0;
     const s = boxToXY(startBox, isFutsal);
@@ -60,34 +57,31 @@ function getDistance(startBox, endBox, isFutsal) {
     return Math.sqrt(Math.pow(e.col - s.col, 2) + Math.pow(e.row - s.row, 2));
 }
 
-// xG Heuristic Model (L2R)
 function getXG(box, isFutsal) {
     if (!box) return 0;
     const { col, row } = boxToXY(box, isFutsal);
     const cols = isFutsal ? 8 : 12;
     const rows = isFutsal ? 4 : 8;
     
-    // Distance to goal center (approx)
     const goalCol = cols;
     const goalRowCenter = (rows - 1) / 2;
     const dist = Math.sqrt(Math.pow(goalCol - col, 2) + Math.pow(goalRowCenter - row, 2));
     
-    // Base xG: closer = higher. Max dist is approx sqrt(12^2 + 4^2) = 12.6
-    // Center is better than wings.
     let xg = Math.max(0.01, 0.3 - (dist * 0.025));
     if (isInPenaltyBox(box, isFutsal)) xg += 0.1;
-    if (dist < 2) xg += 0.2; // Goal mouth
+    if (dist < 2) xg += 0.2; 
     return Math.min(0.9, xg);
 }
 
-// Expected Threat (xT) Base Proxy Matrix (L2R)
 export const getXtValue = (box, isFutsal) => {
     if (!box) return 0;
     const { col } = boxToXY(box, isFutsal);
     const cols = isFutsal ? 8 : 12;
-    let value = (col / cols) * 0.1; // Base progression
-    if (col >= cols - 3) value += 0.2; // Final 3rd bump
-    if (isInPenaltyBox(box, isFutsal)) value += 0.5; // Box bump
+    let value = (col / cols) * 0.1; 
+    const threshold = isFutsal ? 3 : 4; 
+    
+    if (col >= cols - threshold) value += 0.2; 
+    if (isInPenaltyBox(box, isFutsal)) value += 0.5; 
     return value;
 };
 
@@ -184,7 +178,10 @@ export function computeStats(events, match) {
             }
         } else if (currentPossessionTeam === ev.team_id) {
             currentChainEvents++;
-            t.possession_time += (time - (lastEvent?.timestamp ? new Date(lastEvent.timestamp).getTime() / 1000 : time));
+            // Calculate time delta and cap at 10 seconds to avoid Halftime/Stoppage inflation
+            const lastTime = lastEvent?.timestamp ? new Date(lastEvent.timestamp).getTime() / 1000 : time;
+            const timeDelta = Math.min(Math.max(time - lastTime, 0), 10); 
+            t.possession_time += timeDelta;
         } else {
             // Possession Change (Turnover)
             const oldT = currentPossessionTeam === match.team_a_id ? home : away;
@@ -316,7 +313,9 @@ export function computeStats(events, match) {
                 break;
             case 'Shot':
                 t.shots++;
-                const xgVal = getXG(ev.location_box, match.is_futsal);
+                // Penalty xG Override
+                let xgVal = getXG(ev.location_box, match.is_futsal);
+                if (ev.type === 'Penalty') xgVal = 0.78; 
                 t.total_xg += xgVal;
                 
                 if (lastPossessionChangeTime) {
@@ -346,10 +345,12 @@ export function computeStats(events, match) {
                     if (ev.type === 'Penalty') t.penalty_goals++;
                 }
                 break;
+            case 'Interception':
             case 'Tackle':
             case 'Block':
             case 'Clearance':
                 if (ev.action === 'Tackle') t.tackles++;
+                if (ev.action === 'Interception') t.interceptions++;
                 t.defensive_actions++;
                 t.defensive_depth_sum += startCol;
                 if (inAttThirdStart) t.high_press_actions++;
