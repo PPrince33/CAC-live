@@ -68,7 +68,7 @@ const Lineup = ({ matchId, teamAId, teamBId, teamAName, teamBName }) => {
 
     return (
         <div className="t-box p-3 mb-4 bg-white">
-            <div className="text-[10px] font-black uppercase mb-3 opacity-50">MATCH LINEUPS</div>
+            <div className="text-xs font-black uppercase mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>MATCH LINEUPS</div>
             <div className="flex gap-6">
                 {renderTable(lineups.teamA, teamAName, true)}
                 <div style={{ width: 1, background: '#000', opacity: 0.1 }}></div>

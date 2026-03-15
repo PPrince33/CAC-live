@@ -6,7 +6,7 @@ const MomentumChart = ({ data, teamAName, teamBName }) => {
 
     return (
         <div className="t-box p-3">
-            <div className="text-xs font-black uppercase tracking-widest mb-3">MATCH MOMENTUM</div>
+            <div className="text-xs font-black uppercase tracking-widest mb-3" style={{ borderBottom: '2px solid #000', paddingBottom: 4 }}>MATCH MOMENTUM</div>
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 80 }}>
                 {data.map((d, i) => {
                     const hH = (d.home / maxVal) * 60;
